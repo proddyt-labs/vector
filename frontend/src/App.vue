@@ -14,14 +14,18 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen flex flex-col">
-    <nav v-if="auth.isLoggedIn" class="border-b border-amber-900/40 px-6 py-4">
-      <div class="max-w-5xl mx-auto flex items-center justify-between">
-        <div class="text-lg font-mono">
-          <span class="text-amber-400">(·)</span>
-          <span class="ml-2 text-amber-50">vector</span>
-        </div>
+    <nav v-if="auth.isLoggedIn" class="border-b border-amber-900/30 px-6 py-3">
+      <div class="max-w-5xl mx-auto flex items-center gap-4">
+        <a href="https://proddyt.site" class="flex items-center gap-1.5 font-mono text-xs border border-blue-900/40 text-blue-400 hover:bg-blue-900/20 px-2.5 py-1.5 rounded-lg transition-colors flex-shrink-0">
+          <span>&lt;·&gt;</span><span>Home</span>
+        </a>
+        <div class="w-px h-4 bg-amber-900/40 flex-shrink-0" />
+        <RouterLink to="/" class="flex items-center gap-2 no-underline flex-shrink-0">
+          <span class="font-mono text-base font-medium" style="color: var(--vc-primary)">(·)</span>
+          <span class="font-mono text-sm" style="color: var(--vc-muted)">vector</span>
+        </RouterLink>
+        <div class="flex-1" />
         <div class="flex items-center gap-3 text-sm text-amber-200/70">
-          <a href="https://proddyt.site" class="font-mono text-xs border border-blue-900/50 text-blue-400 hover:bg-blue-900/20 px-2 py-0.5 rounded transition-colors">&lt; · &gt;</a>
           <span>{{ auth.displayName }}</span>
           <button @click="auth.logout()" class="text-red-400 hover:text-red-300">Sair</button>
         </div>
