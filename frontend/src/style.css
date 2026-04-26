@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root {
+  --vc-primary: #FBB024;
+  --vc-mid:     #F59E0B;
+  --vc-dark:    #B45309;
+  --vc-bg:      #1A1200;
+  --vc-muted:   #A07B30;
+}
+
+@layer base {
+  body { @apply bg-[var(--vc-bg)] text-amber-50 min-h-screen font-sans; }
+}
