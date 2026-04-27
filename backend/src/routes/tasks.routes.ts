@@ -12,9 +12,10 @@ router.patch("/:id", async (req, res) => {
   const user = getCurrentUser(req);
   const { status, title, description } = req.body as { status?: string; title?: string; description?: string };
 
-  const task = await prisma.task.findFirst({
-    where: { id: req.params.id, project: { ownerId: user.id } },
-  });
+  const where = user.isAdmin
+    ? { id: req.params.id }
+    : { id: req.params.id, project: { ownerId: user.id } };
+  const task = await prisma.task.findFirst({ where });
   if (!task) { res.status(404).json({ error: "Task not found" }); return; }
 
   const data: Record<string, unknown> = { lastEditedById: user.id };
@@ -53,9 +54,10 @@ router.patch("/:id", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   const user = getCurrentUser(req);
-  const task = await prisma.task.findFirst({
-    where: { id: req.params.id, project: { ownerId: user.id } },
-  });
+  const where = user.isAdmin
+    ? { id: req.params.id }
+    : { id: req.params.id, project: { ownerId: user.id } };
+  const task = await prisma.task.findFirst({ where });
   if (!task) { res.status(404).json({ error: "Task not found" }); return; }
   await prisma.task.delete({ where: { id: req.params.id } });
   res.status(204).send();

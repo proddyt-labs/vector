@@ -11,19 +11,27 @@ const TASK_INCLUDE = {
   lastEditedBy: { select: { username: true } },
 } as const;
 
+const PROJECT_INCLUDE_OWNER = {
+  owner: { select: { username: true } },
+  _count: { select: { tasks: true } },
+} as const;
+
 router.get("/", async (req, res) => {
   const user = getCurrentUser(req);
+  const where = user.isAdmin ? {} : { ownerId: user.id };
   const projects = await prisma.project.findMany({
-    where: { ownerId: user.id },
-    include: { _count: { select: { tasks: true } } },
+    where,
+    include: PROJECT_INCLUDE_OWNER,
     orderBy: { createdAt: "desc" },
   });
   res.json(
-    projects.map((p) => ({
+    projects.map((p: any) => ({
       id: p.id,
       name: p.name,
       description: p.description,
       taskCount: p._count.tasks,
+      ownerUsername: p.owner?.username ?? null,
+      isMine: p.ownerId === user.id,
       createdAt: p.createdAt,
     }))
   );
@@ -42,9 +50,14 @@ router.post("/", async (req, res) => {
   res.status(201).json({ id: project.id, name: project.name, description: project.description });
 });
 
+async function findProjectAllowed(projectId: string, userId: string, isAdmin: boolean) {
+  if (isAdmin) return prisma.project.findUnique({ where: { id: projectId } });
+  return prisma.project.findFirst({ where: { id: projectId, ownerId: userId } });
+}
+
 router.delete("/:id", async (req, res) => {
   const user = getCurrentUser(req);
-  const project = await prisma.project.findFirst({ where: { id: req.params.id, ownerId: user.id } });
+  const project = await findProjectAllowed(req.params.id, user.id, user.isAdmin);
   if (!project) { res.status(404).json({ error: "Project not found" }); return; }
   await prisma.project.delete({ where: { id: req.params.id } });
   res.status(204).send();
@@ -52,7 +65,7 @@ router.delete("/:id", async (req, res) => {
 
 router.get("/:id/tasks", async (req, res) => {
   const user = getCurrentUser(req);
-  const project = await prisma.project.findFirst({ where: { id: req.params.id, ownerId: user.id } });
+  const project = await findProjectAllowed(req.params.id, user.id, user.isAdmin);
   if (!project) { res.status(404).json({ error: "Project not found" }); return; }
   const tasks = await prisma.task.findMany({
     where: { projectId: req.params.id },
@@ -64,7 +77,7 @@ router.get("/:id/tasks", async (req, res) => {
 
 router.post("/:id/tasks", async (req, res) => {
   const user = getCurrentUser(req);
-  const project = await prisma.project.findFirst({ where: { id: req.params.id, ownerId: user.id } });
+  const project = await findProjectAllowed(req.params.id, user.id, user.isAdmin);
   if (!project) { res.status(404).json({ error: "Project not found" }); return; }
   const { title, description } = req.body as { title?: string; description?: string };
   if (!title?.trim()) { res.status(400).json({ error: "title required" }); return; }
